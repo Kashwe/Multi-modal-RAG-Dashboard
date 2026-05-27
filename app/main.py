@@ -56,7 +56,5 @@ async def health_check():
         "groq_configured": settings.GROQ_API_KEY != "mock_key_for_development"
     }
 
-# Versioned API routes registration placeholder
-# Will import v1 api_router and mount it when endpoints are declared
-# from app.api.v1.api import api_router
-# app.include_router(api_router, prefix=settings.API_V1_STR)
+from app.api.v1.api import api_router
+app.include_router(api_router, prefix=settings.API_V1_STR)
