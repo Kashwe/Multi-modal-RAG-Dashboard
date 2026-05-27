@@ -4,6 +4,9 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.db.database import Base, engine
+from app.models.document import Document
+
 from app.core.config import settings
 from app.core.logging import setup_logging
 
@@ -17,6 +20,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 # CORS Middleware setup
 app.add_middleware(
