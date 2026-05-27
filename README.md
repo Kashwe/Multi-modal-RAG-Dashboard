@@ -67,20 +67,18 @@ Multi-modal-RAG-Dashboard/
 ## Setup
 
 ```powershell
-# 1. Clone / cd into the project
-cd D:\Navikenz\Project\Capstone-project-2\Multi-modal-RAG-Dashboard
 
-# 2. Create and activate a virtual environment
+# 1. Create and activate a virtual environment
 py -3.12 -m venv venv
 .\venv\Scripts\Activate.ps1
 
-# 3. Install backend dependencies
+# 2. Install backend dependencies
 pip install -r requirements.txt
 
-# 4. Install UI dependencies
+# 3. Install UI dependencies
 pip install -r ui\requirements.txt
 
-# 5. Configure environment
+# 4. Configure environment
 Copy-Item .env.example .env
 notepad .env   # paste your GROQ_API_KEY
 ```
