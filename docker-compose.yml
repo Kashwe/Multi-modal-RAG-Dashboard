@@ -1,0 +1,58 @@
+# version: "3.9"
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - .:/app
+
+  ui:
+    build:
+      context: .
+      dockerfile: ui/Dockerfile
+    container_name: rag-ui
+    ports:
+      - "8501:8501"
+    environment:
+      RAG_API_BASE: http://backend:8000/api/v1
+      RAG_HEALTH_URL: http://backend:8000/health
+    depends_on:
+      - backend
+    volumes:
+      - .:/ui
+
+  postgres:
+    image: postgres:16
+    container_name: rag-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Vishu123
+      POSTGRES_DB: rag_dashboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: rag-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+
