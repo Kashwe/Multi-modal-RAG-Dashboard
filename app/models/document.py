@@ -16,4 +16,10 @@ class Document(Base):
 
     status = Column(String, default="uploaded")
 
+    owner_id = Column(String, index=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+
+
