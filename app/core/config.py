@@ -22,7 +22,13 @@ class Settings(BaseSettings):
     # CORS Configuration
     BACKEND_CORS_ORIGINS: Annotated[
         Any, BeforeValidator(parse_cors_origins)
-    ] = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"]
+    ] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://localhost",      # served via the nginx reverse proxy (port 80)
+        "http://127.0.0.1",
+    ]
 
     # File Upload constraints
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB default

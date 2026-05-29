@@ -45,6 +45,9 @@ Multi-modal-RAG-Dashboard/
 ├── ui/                           # Streamlit front-end
 │   ├── app.py
 │   └── requirements.txt
+├── nginx/
+│   └── nginx.conf                # Reverse proxy: routes frontend + backend
+├── docker-compose.yml            # backend + ui + nginx + postgres + redis
 ├── data/                         # Runtime artifacts (gitignored)
 │   ├── uploads/                  # User-uploaded files
 │   └── faiss/                    # Persisted FAISS indexes
@@ -126,6 +129,62 @@ UI opens at http://localhost:8501.
 
 > The first time you upload a document, the ~80 MB sentence-transformers
 > model downloads. This happens once and is cached locally.
+
+---
+
+## Running with Docker Compose (nginx reverse proxy)
+
+For a one-command deployment, `docker-compose.yml` brings up the full stack —
+backend, UI, PostgreSQL, Redis — behind an **nginx reverse proxy** so the
+frontend and backend are served from a single origin on port **80**.
+
+```bash
+docker compose up --build
+```
+
+Then open **http://localhost** (port 80). nginx routes traffic as follows:
+
+| Path | Routed to | Purpose |
+|---|---|---|
+| `/` and `/_stcore/*` | `ui:8501` (Streamlit) | Frontend (incl. WebSocket channel) |
+| `/api/...` | `backend:8000` (FastAPI) | REST API |
+| `/health` | `backend:8000` | Backend health check |
+| `/docs`, `/redoc`, `/openapi.json` | `backend:8000` | API docs |
+
+The proxy config lives in [nginx/nginx.conf](nginx/nginx.conf). It enables
+WebSocket upgrades for Streamlit's live channel and raises
+`client_max_body_size` to 60 MB to allow document uploads. The individual
+service ports (`8000`, `8501`) remain published for direct access during
+development.
+
+### Verifying the proxy routes traffic correctly
+
+After `docker compose up`, confirm nginx loaded its config and is routing each
+path to the right service:
+
+```bash
+# 1. All containers running (you should see rag-nginx on 0.0.0.0:80->80)
+docker compose ps
+
+# 2. nginx config is valid against the live upstreams
+docker exec rag-nginx nginx -t
+
+# 3. Hit each route through the proxy on port 80
+curl http://localhost/health          # -> backend:  {"status":"healthy",...}
+curl http://localhost/api/v1/sessions  # -> backend:  {"backend":"redis","count":0,...}
+curl -I http://localhost/docs          # -> backend:  HTTP 200 (Swagger UI)
+curl -I http://localhost/              # -> frontend: HTTP 200 (Streamlit)
+curl http://localhost/_stcore/health   # -> frontend: ok  (Streamlit WS channel)
+```
+
+Expected: `/health`, `/api/...`, `/docs`, `/redoc`, `/openapi.json` return
+backend responses, while `/` and everything else returns the Streamlit UI.
+Then open **http://localhost** in a browser — the dashboard loads and its
+sidebar "Backend health" indicator turns green, since the UI and API are now
+served from the same origin.
+
+> A `502 Bad Gateway` on the `/api` or `/health` routes means nginx is working
+> but the **backend** container isn't up — check `docker compose logs backend`.
 
 ---
 
